@@ -3,6 +3,7 @@ import pickle
 import pandas as pd
 import plotly.graph_objects as go
 import numpy as np
+import os
 
 
 def get_clean_data():
@@ -164,32 +165,52 @@ def add_predictions(input_data):
 
 
 
+  # with open("../assets/style.css") as f:
+  #   st.markdown("<style>{}</style>".format(f.read()), unsafe_allow_html=True)
+
+
 def main():
-  st.set_page_config(
-    page_title="Breast Cancer Predictor",
-    page_icon=":female-doctor:",
-    layout="wide",
-    initial_sidebar_state="expanded"
-  )
-  
-  with open("../assets/style.css") as f:
-    st.markdown("<style>{}</style>".format(f.read()), unsafe_allow_html=True)
-  
-  input_data = add_sidebar()
-  
-  with st.container():
-    st.title("Breast Cancer Predictor")
-    st.write("Please connect this app to your cytology lab to help diagnose breast cancer form your tissue sample. This app predicts using a machine learning model whether a breast mass is benign or malignant based on the measurements it receives from your cytosis lab. You can also update the measurements by hand using the sliders in the sidebar. ")
-  
-  col1, col2 = st.columns([4,1])
-  
-  with col1:
-    radar_chart = get_radar_chart(input_data)
-    st.plotly_chart(radar_chart)
-  with col2:
-    add_predictions(input_data)
+    st.set_page_config(
+        page_title="Breast Cancer Predictor",
+        page_icon=":female-doctor:",
+        layout="wide",
+        initial_sidebar_state="expanded"
+    )
+
+    # Absolute path to current file (app/main.py)
+    current_dir = os.path.dirname(os.path.abspath(__file__))
+
+    # Path to assets folder (repo-root/assets/style.css)
+    css_path = os.path.join(current_dir, "..", "assets", "style.css")
+    css_path = os.path.abspath(css_path)  # resolves ../ properly
+
+    # Check if file exists
+    if os.path.exists(css_path):
+        with open(css_path) as f:
+            st.markdown(f"<style>{f.read()}</style>", unsafe_allow_html=True)
+    else:
+        st.warning(f"CSS file not found at {css_path}")
 
 
- 
-if __name__ == '__main__':
-  main()
+  # Continue with the rest of your app
+input_data = add_sidebar()
+  
+with st.container():
+      st.title("Breast Cancer Predictor")
+      st.write(
+          "Please connect this app to your cytology lab to help diagnose breast cancer from your tissue sample. "
+          "This app predicts using a machine learning model whether a breast mass is benign or malignant based on "
+          "the measurements it receives from your cytosis lab. You can also update the measurements by hand using "
+          "the sliders in the sidebar."
+      )
+
+col1, col2 = st.columns([4, 1])
+with col1:
+      radar_chart = get_radar_chart(input_data)
+      st.plotly_chart(radar_chart)
+with col2:
+      add_predictions(input_data)
+
+
+if __name__ == "__main__":
+    main()
