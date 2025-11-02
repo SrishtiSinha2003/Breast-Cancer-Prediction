@@ -6,14 +6,16 @@ import numpy as np
 import os
 
 
+import os
+import pandas as pd
+
 def get_clean_data():
-  data = pd.read_csv("../data/data.csv")
-  
-  data = data.drop(['Unnamed: 32', 'id'], axis=1)
-  
-  data['diagnosis'] = data['diagnosis'].map({ 'M': 1, 'B': 0 })
-  
-  return data
+    # Get the absolute path to the data.csv
+    base_path = os.path.dirname(os.path.abspath(__file__))
+    data_path = os.path.join(base_path, "../data/data.csv")
+    data = pd.read_csv(data_path)
+    return data
+
 
 
 def add_sidebar():
@@ -140,33 +142,61 @@ def get_radar_chart(input_data):
 
 
 def add_predictions(input_data):
-  model = pickle.load(open("../model/model.pkl", "rb"))
-  scaler = pickle.load(open("../model/scaler.pkl", "rb"))
-  
-  input_array = np.array(list(input_data.values())).reshape(1, -1)
-  
-  input_array_scaled = scaler.transform(input_array)
-  
-  prediction = model.predict(input_array_scaled)
-  
-  st.subheader("Cell cluster prediction")
-  st.write("The cell cluster is:")
-  
-  if prediction[0] == 0:
-    st.write("<span class='diagnosis benign'>Benign</span>", unsafe_allow_html=True)
-  else:
-    st.write("<span class='diagnosis malicious'>Malicious</span>", unsafe_allow_html=True)
-    
-  
-  st.write("Probability of being benign: ", model.predict_proba(input_array_scaled)[0][0])
-  st.write("Probability of being malicious: ", model.predict_proba(input_array_scaled)[0][1])
-  
-  st.write("This app can assist medical professionals in making a diagnosis, but should not be used as a substitute for a professional diagnosis.")
+    # Get absolute path of current file (main.py)
+    base_dir = os.path.dirname(os.path.abspath(__file__))
+
+    # Build full paths for model and scaler
+    model_path = os.path.normpath(os.path.join(base_dir, "../model/model.pkl"))
+    scaler_path = os.path.normpath(os.path.join(base_dir, "../model/scaler.pkl"))
+
+    # Load model and scaler safely
+    with open(model_path, "rb") as f:
+        model = pickle.load(f)
+    with open(scaler_path, "rb") as f:
+        scaler = pickle.load(f)
+
+    # Convert user input to array
+    input_array = np.array(list(input_data.values())).reshape(1, -1)
+    input_array_scaled = scaler.transform(input_array)
+
+    # Predict
+    prediction = model.predict(input_array_scaled)
+
+    # Display prediction
+    st.subheader("Cell cluster prediction")
+    st.write("The cell cluster is:")
+
+    if prediction[0] == 0:
+        st.markdown("<span class='diagnosis benign'>Benign</span>", unsafe_allow_html=True)
+    else:
+        st.markdown("<span class='diagnosis malicious'>Malicious</span>", unsafe_allow_html=True)
+
+    # Show probabilities
+    st.write("Probability of being benign:", model.predict_proba(input_array_scaled)[0][0])
+    st.write("Probability of being malicious:", model.predict_proba(input_array_scaled)[0][1])
+
+    st.info("This app can assist medical professionals in making a diagnosis, but should not be used as a substitute for a professional medical opinion.")
 
 
 
   # with open("../assets/style.css") as f:
   #   st.markdown("<style>{}</style>".format(f.read()), unsafe_allow_html=True)
+
+
+# Load and display model metrics
+metrics_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "../model/metrics.pkl")
+
+if os.path.exists(metrics_path):
+    with open(metrics_path, "rb") as f:
+        metrics = pickle.load(f)
+
+    st.subheader("📈 Model Performance on Test Data")
+    st.metric("Accuracy", f"{metrics['accuracy']*100:.2f}%")
+    st.metric("Precision", f"{metrics['precision']*100:.2f}%")
+    st.metric("Recall", f"{metrics['recall']*100:.2f}%")
+    st.metric("F1 Score", f"{metrics['f1_score']*100:.2f}%")
+else:
+    st.warning("Model performance metrics not found. Please retrain the model first.")
 
 
 def main():
